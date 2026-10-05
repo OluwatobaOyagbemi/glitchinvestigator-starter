@@ -14,9 +14,11 @@ Document at least 3 bugs you found. Add rows as needed.
 
 | Input | Expected Behavior | Actual Behavior | Console Output / Error |
 |-------|-------------------|-----------------|------------------------|
-| | | | |
-| | | | |
-| | | | |
+| Guess 60 when the secret is 50 | Hint says "Go LOWER!" | Hint said "Go HIGHER!" (hints reversed) | None; wrong text only |
+| Guess 9 when the secret is 10, on an even attempt | "Too Low" | The secret was cast to a string, so `"9" > "10"` and the result was "Too High" | None; wrong outcome, no error |
+| Type "abc" or leave the box empty | Error message, no attempt used | Error shown, but the attempt counter still went up | None |
+| Switch to Hard, or press New Game | New secret in the chosen range, fresh score/history | Old secret kept on difficulty change; New Game used 1-100 and kept score, status and history | None |
+| Guess "7.9" or "500" on Normal | Rejected as invalid | "7.9" silently became 7; 500 was accepted as a valid guess | None |
 
 ---
 
@@ -40,13 +42,12 @@ I used Claude Code in VS Code for this project. It marked suspected bugs in `app
 
 ## 4. What did you learn about Streamlit and state?
 
-- How would you explain Streamlit "reruns" and session state to a friend who has never used Streamlit?
+Streamlit reruns the whole script from top to bottom every time you click a button or type in a box, so ordinary variables are rebuilt from scratch each time. `st.session_state` is a dictionary that survives those reruns, so anything that must persist (the secret, attempts, score, history) has to live there. In this project the secret only stayed stable because it was created once inside an `if "secret" not in st.session_state` check. Resetting a game also means resetting every one of those keys, which is why I moved it into one `start_new_game()` function.
 
 ---
 
 ## 5. Looking ahead: your developer habits
 
-- What is one habit or strategy from this project that you want to reuse in future labs or projects?
-  - This could be a testing habit, a prompting strategy, or a way you used Git.
-- What is one thing you would do differently next time you work with AI on a coding task?
-- In one or two sentences, describe how this project changed the way you think about AI generated code.
+- **Habit to reuse:** marking each suspected bug with a FIXME comment and then fixing one bug at a time, each with a small pytest case. It kept every change small and easy to review in the diff.
+- **Do differently next time:** I would check the project's Python version before accepting code. One suggested change used `int | None`, which failed on the project's Python 3.9 until I switched to `Optional`.
+- **How my view changed:** AI-generated code can look confident and still hide bugs, like the "production-ready" starter that reversed its own hints. I now treat it as a draft that needs tests and a real run before I trust it.
