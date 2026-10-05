@@ -34,7 +34,7 @@ I used Claude Code in VS Code for this project. It marked suspected bugs in `app
 
 - **How I decided a bug was fixed:** a bug counted as fixed only when a pytest case that targeted it failed before the change and passed after, and the other tests still passed. For the hint bug the test is a guess of 60 against a secret of 50, which must return "Too High" with a "LOWER" message.
 - **Tests I ran:** `python -m pytest` runs four tests in `tests/test_game_logic.py`: winning guess, too high, too low, and numeric-not-string comparison. The last one showed that the odd/even behavior was a type problem, not a logic problem in the comparison itself.
-- **How AI helped with tests:** Claude suggested the tests, and the string-comparison edge case (`9` vs `10`) came from its explanation of why string comparison breaks. I still need to run `streamlit run app.py` and play a few rounds to confirm the fixes in the live game.
+- **How AI helped with tests:** Claude suggested the tests, and the string-comparison edge case (`9` vs `10`) came from its explanation of why string comparison breaks. I also ran the app with `streamlit run app.py` and played it: invalid input, hint direction, difficulty changes and New Game all behaved correctly.
 
 ---
 
