@@ -32,27 +32,25 @@ low, high = get_range_for_difficulty(difficulty)
 st.sidebar.caption(f"Range: {low} to {high}")
 st.sidebar.caption(f"Attempts allowed: {attempt_limit}")
 
-if "secret" not in st.session_state:
+def start_new_game():
+    # FIX: One reset used by New Game and difficulty changes (secret uses the
+    # current range; attempts, score, status and history all reset); Claude Code
     st.session_state.secret = random.randint(low, high)
-
-# FIXME: Logic breaks here: secret is only generated once, so changing difficulty doesn't change the range
-if "attempts" not in st.session_state:
-    st.session_state.attempts = 1
-
-if "score" not in st.session_state:
+    st.session_state.attempts = 0
     st.session_state.score = 0
-
-if "status" not in st.session_state:
     st.session_state.status = "playing"
-
-if "history" not in st.session_state:
     st.session_state.history = []
+    st.session_state.game_difficulty = difficulty
+
+
+if st.session_state.get("game_difficulty") != difficulty:
+    start_new_game()
 
 st.subheader("Make a guess")
 
 st.info(
-    # FIXME: Logic breaks here: range is hardcoded to 1-100 instead of using low/high; attempts left is also off by one since attempts starts at 1
-    f"Guess a number between 1 and 100. "
+    # FIX: Use the real range; attempts now counts guesses made, starting at 0
+    f"Guess a number between {low} and {high}. "
     f"Attempts left: {attempt_limit - st.session_state.attempts}"
 )
 
@@ -77,9 +75,7 @@ with col3:
     show_hint = st.checkbox("Show hint", value=True)
 
 if new_game:
-    # FIXME: Logic breaks here: ignores difficulty range (uses 1-100), doesn't reset status/score/history, and attempts resets to 0 instead of 1
-    st.session_state.attempts = 0
-    st.session_state.secret = random.randint(1, 100)
+    start_new_game()
     st.success("New game started.")
     st.rerun()
 
@@ -91,16 +87,13 @@ if st.session_state.status != "playing":
     st.stop()
 
 if submit:
-    # FIXME: Logic breaks here: attempts increments before parsing, so invalid input costs a turn
-    st.session_state.attempts += 1
-
-    ok, guess_int, err = parse_guess(raw_guess)
+    ok, guess_int, err = parse_guess(raw_guess, low, high)
 
     if not ok:
-        # FIXME: Logic breaks here: raw invalid text is added to history alongside ints
-        st.session_state.history.append(raw_guess)
+        # FIX: Invalid input no longer costs an attempt or enters history
         st.error(err)
     else:
+        st.session_state.attempts += 1
         st.session_state.history.append(guess_int)
 
         # FIX: Pass the secret as an int (it was cast to str on even attempts); found and fixed with Claude Code
@@ -123,7 +116,6 @@ if submit:
                 f"Final score: {st.session_state.score}"
             )
         else:
-            # FIXME: Logic breaks here: attempts starts at 1, so the game ends one guess earlier than the stated limit
             if st.session_state.attempts >= attempt_limit:
                 st.session_state.status = "lost"
                 st.error(
